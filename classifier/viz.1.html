@@ -1,0 +1,92 @@
+<html>
+  <head>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.3.7/papaparse.min.js"></script>
+    <script type="text/javascript">
+google.charts.load('current', {'packages':['corechart']});
+google.charts.setOnLoadCallback(drawChart);
+
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgbToHex(r, g, b) {
+    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
+var pointService = new WebSocket("ws://localhost:3000/echo");
+
+pointService.onmessage = function (e) {
+    updateChart(e.data.split(","))
+}
+
+// function to update the chart with new data.
+function updateChart(x, y) {
+
+    var chart = new google.visualization.ScatterChart(document.getElementById('chart_div'));
+
+    container = [
+        ["x", "y"],
+    ]
+    console.log(x, y)
+    container.push([+x,+y])
+
+    var data = google.visualization.arrayToDataTable(container);
+
+    data.addColumn({type: 'string', role: 'style'});
+    for (var i=0;i<data.getNumberOfRows();i++) {
+        data.setCell(i, 2, 'point { fill-color: ' + rgbToHex(255, 0, 0) +'; size: 1; }');
+    }
+
+        var options = {
+            width: 1080,
+            height: 1080,
+            title: "my flat -- generated from single point (origin) using xiaomi vacuum cleaner v2's LIDAR sensor (laser:0), red means intensity, e.g., object's reflectiveness according to the radar, the redder the more reflective",
+            legend: 'none',
+            lineWidth: 1,
+        };
+
+    // redraw the chart.
+    chart.draw(data, options);
+
+}
+
+function drawChart() {
+
+    var chart = new google.visualization.ScatterChart(document.getElementById('chart_div'));
+
+    container = [
+        ["x", "y"],
+    ]
+
+    Papa.parse("t2.csv", {
+        download: true,
+        complete: function(res) {
+
+        res.data.forEach(function(d) {
+            x = +d[0]
+            y = +d[1]
+            container.push([x,y])
+        })
+
+        var data = google.visualization.arrayToDataTable(container);
+
+        var options = {
+            width: 1080,
+            height: 1080,
+            title: "my flat -- generated from single point (origin) using xiaomi vacuum cleaner v2's LIDAR sensor (laser:0), red means intensity, e.g., object's reflectiveness according to the radar, the redder the more reflective",
+            legend: 'none',
+            lineWidth: 1,
+        };
+
+        chart.draw(data, options);
+
+    }});
+}
+    </script>
+  </head>
+  <body>
+    <div id="chart_div"></div>
+  </body>
+</html>
